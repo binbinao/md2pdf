@@ -41,8 +41,11 @@ jobs:
       - name: Format check (Prettier)
         run: npx prettier --check 'src/**/*.js' 'bin/**/*.js' 'tests/**/*.js'
 
-      - name: Run tests
-        run: npm test
+      - name: Run unit tests
+        # CI runs only the fast table tests (no puppeteer). Full integration
+        # tests (including PDF generation) run locally via `npm test` and
+        # need Chrome deps that this workflow doesn't install.
+        run: npm run test:unit
 
       - name: Verify CLI smoke
         run: |
