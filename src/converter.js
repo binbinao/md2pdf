@@ -1,7 +1,7 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const mdToPdf = require('md-to-pdf').default;
-const { hasMarkdownTable, getTableCss } = require('./table.js');
+const { hasMarkdownTable, hasMermaid, getTableCss, getMermaidScript } = require('./table.js');
 
 /**
  * Base CSS always injected into every PDF. Provides a cross-platform
@@ -42,11 +42,13 @@ async function convert(inputPath, outputPath, options = {}) {
   const basedir = path.dirname(inputPath);
   const tableCss = hasMarkdownTable(inputContent) ? getTableCss() : '';
   const css = tableCss ? `${BASE_CSS}\n${tableCss}` : BASE_CSS;
+  const scripts = hasMermaid(inputContent) ? [{ content: getMermaidScript() }] : [];
 
   const config = {
     dest: outputPath,
     basedir,
     css,
+    script: scripts,
     pdf_options: { format: 'A4' },
     document_title: options.theme ? `md2pdf [${options.theme}]` : 'md2pdf',
   };

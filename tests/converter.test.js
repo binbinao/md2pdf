@@ -54,3 +54,15 @@ test('convert: renders CJK content without throwing (smoke test)', async () => {
   assert.equal(buf.slice(0, 4).toString(), '%PDF');
   assert.ok(buf.length > 1000, 'CJK PDF should have meaningful content');
 });
+
+test('convert: handles markdown with mermaid block (smoke test)', async () => {
+  // 验证：含 ```mermaid 块的 markdown 能被转换（不报错、PDF 头部正确）
+  // 视觉验证（mermaid 是否真的渲染成图）由用户打开 PDF 检查
+  const md = '# Architecture\n\n```mermaid\ngraph TD\n  A[User] --> B[API]\n  B --> C[DB]\n```\n';
+  const { dir, file } = await tmpFile('.md', md);
+  const out = path.join(dir, 'mermaid.pdf');
+  await convert(file, out);
+  const buf = await fs.readFile(out);
+  assert.equal(buf.slice(0, 4).toString(), '%PDF');
+  assert.ok(buf.length > 1000, 'mermaid PDF should have meaningful content');
+});

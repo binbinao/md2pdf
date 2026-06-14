@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { hasMarkdownTable, getTableCss } = require('../src/table.js');
+const { hasMarkdownTable, hasMermaid, getTableCss, getMermaidScript } = require('../src/table.js');
 
 test('hasMarkdownTable: detects a standard pipe table', () => {
   const md = '| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |';
@@ -39,4 +39,28 @@ test('converter: BASE_CSS contains cross-platform CJK font stack', () => {
   assert.match(src, /Microsoft YaHei/, 'should include Windows CJK font');
   assert.match(src, /Noto Sans CJK SC/, 'should include Linux CJK font');
   assert.match(src, /!important/, 'font-family needs !important to override md-to-pdf default');
+});
+
+test('hasMermaid: detects mermaid fenced code block', () => {
+  const md = '```mermaid\ngraph TD\nA-->B\n```';
+  assert.equal(hasMermaid(md), true);
+});
+
+test('hasMermaid: is case-insensitive on the language tag', () => {
+  assert.equal(hasMermaid('```MERMAID\nA-->B\n```'), true);
+  assert.equal(hasMermaid('```Mermaid\nA-->B\n```'), true);
+});
+
+test('hasMermaid: returns false for plain code blocks', () => {
+  assert.equal(hasMermaid('```js\nconst x = 1;\n```'), false);
+  assert.equal(hasMermaid('```\nplain text\n```'), false);
+  assert.equal(hasMermaid('no code blocks at all'), false);
+});
+
+test('getMermaidScript: returns a non-empty IIFE string with CDN URL', () => {
+  const script = getMermaidScript();
+  assert.ok(script.length > 50, 'script should have meaningful content');
+  assert.match(script, /mermaid\.min\.js/, 'should reference mermaid CDN');
+  assert.match(script, /mermaid\.initialize/, 'should call mermaid.initialize');
+  assert.match(script, /document\.head/, 'should inject into head');
 });
