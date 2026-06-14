@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [18, 20, 22]
+        node: [22]
     steps:
       - uses: actions/checkout@v4
 
@@ -27,11 +27,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # puppeteer@22+ is ESM-only; md-to-pdf@5 does require('puppeteer').
-      # Node 22.12+ handles this by default; Node 18.19+ / 20.x need this flag.
-      # No-op on Node 22.12+.
-      - name: Set NODE_OPTIONS
-        run: echo "NODE_OPTIONS=--experimental-require-module" >> $GITHUB_ENV
+      # puppeteer@22+ is ESM-only and md-to-pdf@5 does require('puppeteer').
+      # Node 22.12+ handles require() of ESM by default. We pin CI to Node 22
+      # because the flag-based workaround on 18/20 has reliability limits with
+      # the CJS-bridge-requires-pure-ESM pattern that md-to-pdf uses.
+      # Local dev requires Node >= 18 (see package.json engines), but CJS-ESM
+      # interop is only stable on 22+. Pin puppeteer to 21.x if you need to
+      # support Node 18/20.
 
       - name: Lint (ESLint)
         run: npx eslint src/ bin/ --max-warnings=0
