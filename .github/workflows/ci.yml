@@ -27,6 +27,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # puppeteer@22+ is ESM-only; md-to-pdf@5 does require('puppeteer').
+      # Node 22.12+ handles this by default; Node 18.19+ / 20.x need this flag.
+      # No-op on Node 22.12+.
+      - name: Set NODE_OPTIONS
+        run: echo "NODE_OPTIONS=--experimental-require-module" >> $GITHUB_ENV
+
       - name: Lint (ESLint)
         run: npx eslint src/ bin/ --max-warnings=0
 
