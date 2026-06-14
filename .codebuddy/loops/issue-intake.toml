@@ -1,0 +1,65 @@
+# Loop: issue-intake
+# 用途：监听 GitHub issues，自动分析 + 提 PR
+
+[loop]
+id = "issue-intake"
+description = "Auto-handle incoming GitHub issues"
+version = "1.0.0"
+
+[trigger]
+type = "webhook"
+source = "github"
+events = ["issues.opened", "issues.labeled"]
+filter = "label == 'auto-handle'"
+
+[state]
+backend = "sqlite"
+path = ".codebuddy/state/loops/issue-intake.db"
+
+[[steps]]
+name = "observe"
+agent = "observer"
+timeout = "2m"
+
+[[steps]]
+name = "plan"
+agent = "planner"
+timeout = "5m"
+retries = 2
+
+[[steps]]
+name = "act"
+agent = "coder"
+timeout = "30m"
+retries = 3
+on_failure = "goto:plan"
+
+[[steps]]
+name = "verify"
+hooks = ["pre-commit", "pre-push"]
+timeout = "10m"
+on_failure = "goto:act"
+
+[[steps]]
+name = "publish"
+agent = "publisher"
+tool = "mcp__github__create_pull_request"
+requires_approval = ["merge_to_main"]
+timeout = "2m"
+
+[failure]
+max_retries = 3
+backoff = "exponential"
+initial_delay = "30s"
+max_delay = "10m"
+on_exhausted = "escalate:human"
+
+[timeout]
+total = "2h"
+per_step = "30m"
+
+[observability]
+log_level = "info"
+log_path = ".codebuddy/logs/loops/issue-intake/"
+metrics = ["duration", "success_rate", "retry_count"]
+alert_on = ["failure_rate > 0.2", "duration_p99 > 30m"]

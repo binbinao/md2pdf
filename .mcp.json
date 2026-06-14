@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"],
+      "description": "操作 md2pdf 仓内文件"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+      },
+      "description": "操作 GitHub API"
+    },
+    "shell": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-shell"],
+      "allowedCommands": ["git", "npm", "node", "npx"],
+      "description": "执行受限的 shell 命令"
+    }
+  }
+}

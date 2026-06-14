@@ -1,0 +1,47 @@
+# Loop: pr-review
+# 用途：监听 GitHub PRs，自动 review + 反馈
+
+[loop]
+id = "pr-review"
+description = "Auto-review incoming pull requests"
+version = "1.0.0"
+
+[trigger]
+type = "webhook"
+source = "github"
+events = ["pull_request.opened", "pull_request.synchronize"]
+
+[state]
+backend = "sqlite"
+path = ".codebuddy/state/loops/pr-review.db"
+
+[[steps]]
+name = "observe"
+agent = "observer"
+timeout = "2m"
+
+[[steps]]
+name = "review"
+agent = "reviewer"
+timeout = "15m"
+retries = 2
+
+[[steps]]
+name = "feedback"
+tool = "mcp__github__create_pull_request_review"
+timeout = "2m"
+on_failure = "goto:review"
+
+[failure]
+max_retries = 2
+backoff = "exponential"
+on_exhausted = "escalate:human"
+
+[timeout]
+total = "1h"
+per_step = "20m"
+
+[observability]
+log_level = "info"
+log_path = ".codebuddy/logs/loops/pr-review/"
+metrics = ["review_duration", "comments_count"]

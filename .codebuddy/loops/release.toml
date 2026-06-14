@@ -1,0 +1,52 @@
+# Loop: release
+# 用途：监听 merge 到 main，自动发版 + 关 issue
+
+[loop]
+id = "release"
+description = "Auto-release on merge to main"
+version = "1.0.0"
+
+[trigger]
+type = "webhook"
+source = "github"
+events = ["pull_request.closed"]
+filter = "merged == true AND base == 'main'"
+
+[state]
+backend = "sqlite"
+path = ".codebuddy/state/loops/release.db"
+
+[[steps]]
+name = "observe"
+agent = "observer"
+timeout = "2m"
+
+[[steps]]
+name = "docs"
+agent = "docs-writer"
+timeout = "5m"
+
+[[steps]]
+name = "publish"
+tool = "mcp__github__create_release"
+requires_approval = ["publish_to_npm"]
+timeout = "5m"
+
+[[steps]]
+name = "close-issues"
+tool = "mcp__github__update_issue"
+timeout = "2m"
+
+[failure]
+max_retries = 3
+backoff = "linear"
+on_exhausted = "escalate:human"
+
+[timeout]
+total = "30m"
+per_step = "10m"
+
+[observability]
+log_level = "info"
+log_path = ".codebuddy/logs/loops/release/"
+metrics = ["release_duration", "issues_closed"]

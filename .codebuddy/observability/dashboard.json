@@ -1,0 +1,40 @@
+{
+  "title": "md2pdf Agentic Engineering Dashboard",
+  "panels": [
+    {
+      "id": "issue-intake-success-rate",
+      "title": "issue-intake 成功率",
+      "type": "gauge",
+      "query": "loop_runs{loop_id='issue-intake',status='done'} / loop_runs{loop_id='issue-intake'}",
+      "thresholds": { "warning": 0.8, "critical": 0.5 }
+    },
+    {
+      "id": "pr-review-duration",
+      "title": "PR review P95 耗时",
+      "type": "timeseries",
+      "query": "histogram_quantile(0.95, loop_step_duration{loop_id='pr-review',step='review'})",
+      "unit": "minutes"
+    },
+    {
+      "id": "human-escalation-rate",
+      "title": "升级人工率",
+      "type": "stat",
+      "query": "loop_runs{status='human'} / loop_runs",
+      "thresholds": { "warning": 0.2 }
+    }
+  ],
+  "alerts": [
+    {
+      "name": "high-failure-rate",
+      "condition": "issue-intake-success-rate < 0.8",
+      "severity": "warning",
+      "channels": ["slack:#agentic-eng"]
+    },
+    {
+      "name": "critical-failure-rate",
+      "condition": "issue-intake-success-rate < 0.5",
+      "severity": "critical",
+      "channels": ["slack:#agentic-eng", "pagerduty:on-call"]
+    }
+  ]
+}
