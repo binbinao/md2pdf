@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Mirror the .codebuddy/hooks/pre-push.sh behavior for human-triggered commits/PRs.
+# Agents get the same checks via Hooks, humans get them via this CI workflow.
+
+jobs:
+  test:
+    name: Lint + Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (ESLint)
+        run: npx eslint src/ bin/ --max-warnings=0
+
+      - name: Format check (Prettier)
+        run: npx prettier --check 'src/**/*.js' 'bin/**/*.js' 'tests/**/*.js'
+
+      - name: Run tests
+        run: npm test
+
+      - name: Verify CLI smoke
+        run: |
+          echo "# CI smoke" > /tmp/smoke.md
+          node bin/md2pdf.js /tmp/smoke.md -o /tmp/smoke.pdf
+          head -c 4 /tmp/smoke.pdf | grep -q '%PDF' || (echo "PDF magic bytes missing" && exit 1)
+
+  agentic-config-validate:
+    name: Validate Agentic config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate JSON files
+        run: |
+          for f in .mcp.json .codebuddy/observability/dashboard.json package.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f'))" && echo "OK: $f"
+          done
+
+      - name: Validate TOML files
+        run: |
+          npm install --no-save toml
+          for f in .codebuddy/loops/*.toml; do
+            node -e "require('toml').parse(require('fs').readFileSync('$f','utf8'))" && echo "OK: $f"
+          done
+
+      - name: Validate hook shell syntax
+        run: |
+          for f in .codebuddy/hooks/*.sh; do
+            bash -n "$f" && echo "OK: $(basename $f)"
+          done
+          bash -n .codebuddy/skills/md2pdf-converter/scripts/convert.sh && echo "OK: convert.sh"
+
+      - name: Check all subagents referenced by loops exist
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const toml = require('toml');
+            const referenced = new Set();
+            for (const f of fs.readdirSync('.codebuddy/loops').filter(f => f.endsWith('.toml'))) {
+              const c = toml.parse(fs.readFileSync('.codebuddy/loops/' + f, 'utf8'));
+              for (const step of c.steps || []) {
+                if (step.agent) referenced.add(step.agent);
+              }
+            }
+            const missing = [];
+            for (const name of referenced) {
+              const p = '.codebuddy/agents/' + name + '.md';
+              if (!fs.existsSync(p)) missing.push(name);
+            }
+            if (missing.length) {
+              console.error('Missing subagent files:', missing.join(', '));
+              process.exit(1);
+            }
+            console.log('All', referenced.size, 'subagent references resolved:', [...referenced].join(', '));
+          "

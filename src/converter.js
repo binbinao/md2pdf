@@ -48,6 +48,7 @@ async function convert(inputPath, outputPath, options = {}) {
     basedir,
     css,
     pdf_options: { format: 'A4' },
+    document_title: options.theme ? `md2pdf [${options.theme}]` : 'md2pdf',
   };
 
   const result = await mdToPdf({ path: inputPath }, config);

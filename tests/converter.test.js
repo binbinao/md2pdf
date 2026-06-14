@@ -30,10 +30,7 @@ test('convert: accepts theme option without throwing', async () => {
 });
 
 test('convert: throws on missing input file', async () => {
-  await assert.rejects(
-    () => convert('/nope/does-not-exist.md', '/tmp/x.pdf'),
-    /not found|ENOENT/i
-  );
+  await assert.rejects(() => convert('/nope/does-not-exist.md', '/tmp/x.pdf'), /not found|ENOENT/i);
 });
 
 test('convert: handles empty markdown gracefully', async () => {
@@ -47,7 +44,10 @@ test('convert: handles empty markdown gracefully', async () => {
 test('convert: renders CJK content without throwing (smoke test)', async () => {
   // 验证：含 CJK 字符的 markdown 能被正常转换（不报错、PDF 头部正确）
   // 视觉验证（汉字是否显示）由用户打开 PDF 检查
-  const { dir, file } = await tmpFile('.md', '# 中文标题\n\n这是一段**中文**段落。\n\n- 苹果\n- 香蕉');
+  const { dir, file } = await tmpFile(
+    '.md',
+    '# 中文标题\n\n这是一段**中文**段落。\n\n- 苹果\n- 香蕉',
+  );
   const out = path.join(dir, 'cjk.pdf');
   await convert(file, out);
   const buf = await fs.readFile(out);

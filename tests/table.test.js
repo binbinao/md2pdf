@@ -33,7 +33,7 @@ test('converter: BASE_CSS contains cross-platform CJK font stack', () => {
   // 跨平台覆盖：macOS (PingFang SC / Hiragino Sans GB)、Windows (Microsoft YaHei)、Linux (Noto Sans CJK SC)
   const src = require('node:fs').readFileSync(
     require('node:path').join(__dirname, '../src/converter.js'),
-    'utf8'
+    'utf8',
   );
   assert.match(src, /PingFang SC/, 'should include macOS CJK font');
   assert.match(src, /Microsoft YaHei/, 'should include Windows CJK font');

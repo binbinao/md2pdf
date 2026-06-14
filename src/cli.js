@@ -31,9 +31,7 @@ async function cli(argv) {
   }
 
   const inputPath = path.resolve(input);
-  const outputPath = args.out
-    ? path.resolve(args.out)
-    : inputPath.replace(/\.md$/, '.pdf');
+  const outputPath = args.out ? path.resolve(args.out) : inputPath.replace(/\.md$/, '.pdf');
 
   await convert(inputPath, outputPath, { theme: args.theme });
   console.log(`✅ PDF written: ${outputPath}`);

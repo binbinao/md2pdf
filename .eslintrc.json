@@ -1,0 +1,39 @@
+{
+  "root": true,
+  "env": {
+    "node": true,
+    "es2022": true,
+    "mocha": false
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "script"
+  },
+  "globals": {
+    "require": "readonly",
+    "module": "readonly",
+    "exports": "writable",
+    "__dirname": "readonly",
+    "__filename": "readonly",
+    "process": "readonly",
+    "console": "readonly",
+    "Buffer": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-undef": "error",
+    "no-console": "off",
+    "eqeqeq": ["error", "always"],
+    "no-var": "error",
+    "prefer-const": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["tests/**/*.test.js"],
+      "env": { "node": true },
+      "globals": {
+        "test": "readonly"
+      }
+    }
+  ]
+}
