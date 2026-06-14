@@ -51,6 +51,12 @@ async function convert(inputPath, outputPath, options = {}) {
     script: scripts,
     pdf_options: { format: 'A4' },
     document_title: options.theme ? `md2pdf [${options.theme}]` : 'md2pdf',
+    // Disable Chrome's sandbox when running in restricted environments like
+    // CI containers (AppArmor blocks user-namespaces on Ubuntu 23.10+).
+    // For a local CLI tool that only renders user-supplied markdown, the
+    // sandbox is defense-in-depth; removing it trades a small security
+    // margin for the ability to run in Docker / GitHub Actions / etc.
+    launch_options: { args: ['--no-sandbox', '--disable-setuid-sandbox'] },
   };
 
   const result = await mdToPdf({ path: inputPath }, config);
