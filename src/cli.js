@@ -10,8 +10,8 @@ const { convert } = require('./converter.js');
 async function cli(argv) {
   const args = minimist(argv, {
     string: ['theme', 'out'],
-    boolean: ['help', 'version'],
-    alias: { h: 'help', v: 'version', o: 'out', t: 'theme' },
+    boolean: ['help', 'version', 'quiet'],
+    alias: { h: 'help', v: 'version', o: 'out', t: 'theme', q: 'quiet' },
     default: { theme: 'github' },
   });
 
@@ -21,7 +21,9 @@ async function cli(argv) {
   }
   if (args.version) {
     const pkg = require('../package.json');
-    console.log(`md2pdf v${pkg.version}`);
+    if (!args.quiet) {
+      console.log(`md2pdf v${pkg.version}`);
+    }
     return;
   }
 
@@ -34,7 +36,9 @@ async function cli(argv) {
   const outputPath = args.out ? path.resolve(args.out) : inputPath.replace(/\.md$/, '.pdf');
 
   await convert(inputPath, outputPath, { theme: args.theme });
-  console.log(`✅ PDF written: ${outputPath}`);
+  if (!args.quiet) {
+    console.log(`✅ PDF written: ${outputPath}`);
+  }
 }
 
 function printHelp() {
@@ -45,6 +49,7 @@ Options:
   -t, --theme <name>   Theme: github (default) | plain | academic
   -h, --help           Show this help
   -v, --version        Show version
+  -q, --quiet          Suppress output
 
 Examples:
   md2pdf README.md
