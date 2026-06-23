@@ -64,3 +64,38 @@ test('getMermaidScript: returns a non-empty IIFE string with CDN URL', () => {
   assert.match(script, /mermaid\.initialize/, 'should call mermaid.initialize');
   assert.match(script, /document\.head/, 'should inject into head');
 });
+
+test('cli: --quiet suppresses success output', () => {
+  const { execFileSync } = require('node:child_process');
+  const path = require('node:path');
+  const fs = require('node:fs');
+
+  // 用最简单的 markdown 做输入（跟 CI smoke test 同一思路，避免复杂内容导致超时）
+  const input = '/tmp/test-quiet-input.md';
+  const output = '/tmp/test-quiet.pdf';
+  fs.writeFileSync(input, '# Quiet test\n\nHello world.\n');
+
+  // 清理可能残留的旧文件
+  try {
+    fs.unlinkSync(output);
+  } catch {}
+
+  const stdout = execFileSync(
+    'node',
+    [path.resolve(__dirname, '../bin/md2pdf.js'), input, '-o', output, '-q'],
+    { encoding: 'utf8', timeout: 30000 },
+  );
+
+  // quiet 模式不应打印成功消息
+  assert.ok(!stdout.includes('✅ PDF written'), 'quiet mode should not print success message');
+  // 但 PDF 应该确实生成了
+  assert.ok(fs.existsSync(output), 'PDF should still be created in quiet mode');
+
+  // 清理
+  try {
+    fs.unlinkSync(input);
+  } catch {}
+  try {
+    fs.unlinkSync(output);
+  } catch {}
+});
